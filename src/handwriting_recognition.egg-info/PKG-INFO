@@ -1,0 +1,19 @@
+Metadata-Version: 2.4
+Name: handwriting-recognition
+Version: 1.0.0
+Summary: Add your description here
+Requires-Python: >=3.12
+Description-Content-Type: text/markdown
+Requires-Dist: datasets>=3.5.1
+Requires-Dist: flask>=3.1.0
+Requires-Dist: imageio[pyav]>=2.37.0
+Requires-Dist: matplotlib>=3.10.1
+Requires-Dist: mediapipe>=0.10.21
+Requires-Dist: msgpack>=1.1.0
+Requires-Dist: numpy>=1.26.4
+Requires-Dist: python-dotenv>=1.0.1
+Requires-Dist: scikit-learn>=1.6.1
+Requires-Dist: scipy>=1.15.2
+Requires-Dist: spacy>=3.8.5
+Requires-Dist: torch>=2.7.0
+Requires-Dist: tqdm>=4.67.1
