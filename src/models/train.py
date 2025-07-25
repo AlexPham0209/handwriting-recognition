@@ -3,11 +3,12 @@ import time
 from models.dataloader import load_data
 import matplotlib.pyplot as plt
 from models.model import CaptchaDetectionModel
-from utils.ctc_decoding import ctc_greedy_decoding
+from utils.ctc_decoding import ctc_greedy
 from torch.nn.functional import log_softmax, softmax
 import torch
 from torch import nn
 from tqdm import tqdm
+from utils.early_stopping import EarlyStopping
 import yaml
 
 DEVICE = torch.device("cuda" if torch.cuda.is_available() else "cpu")
@@ -17,9 +18,12 @@ def train(train_dl, test_dl, valid_dl, char_to_idx, idx_to_char, config):
     model = CaptchaDetectionModel(len(char_to_idx), device=DEVICE).to(DEVICE)
     criterion = nn.CTCLoss().to(DEVICE)
     optimizer = torch.optim.Adam(model.parameters(), lr=float(config['lr']))
+    scheduler = torch.optim.lr_scheduler.ReduceLROnPlateau(optimizer, 'min')
+    early_stopping = EarlyStopping(patience=5, delta=0.025)
 
     best_loss = torch.inf
-    loss_history = []
+    train_loss_history = []
+    valid_loss_history = []
 
     epochs = config["epochs"]
     save_path = config["save_path"]
@@ -35,7 +39,8 @@ def train(train_dl, test_dl, valid_dl, char_to_idx, idx_to_char, config):
         optimizer.load_state_dict(checkpoint["optimizer_state_dict"])
         criterion = checkpoint["criterion"]
         best_loss = checkpoint["best_loss"]
-        loss_history = checkpoint["loss_history"]
+        train_loss_history = checkpoint["train_loss_history"]
+        valid_loss_history = checkpoint["valid_loss_history"]
 
     valid_loss = validate(model, valid_dl, criterion)
     print(f"Valid Average loss: {valid_loss:>8f}\n")
@@ -44,6 +49,9 @@ def train(train_dl, test_dl, valid_dl, char_to_idx, idx_to_char, config):
         start_time = time.time()
         train_loss = train_epoch(model, train_dl, optimizer, criterion, epoch)
         valid_loss = validate(model, valid_dl, criterion)
+
+        train_loss_history.append(train_loss)
+        valid_loss_history.append(valid_loss)
 
         if valid_loss < best_loss:
             best_loss = valid_loss
@@ -55,7 +63,8 @@ def train(train_dl, test_dl, valid_dl, char_to_idx, idx_to_char, config):
                     "optimizer_state_dict": optimizer.state_dict(),
                     "criterion": criterion,
                     "best_loss": best_loss,
-                    "loss_history": loss_history,
+                    "train_loss_history": train_loss_history,
+                    "valid_loss_history": valid_loss_history,
                 },
                 os.path.join(save_path, "best.pt"),
             )
@@ -64,27 +73,24 @@ def train(train_dl, test_dl, valid_dl, char_to_idx, idx_to_char, config):
         print(f"\nEpoch Time: {total_time:.1f} seconds")
         print(f"Training Average loss: {train_loss:>8f}")
         print(f"Valid Average loss: {valid_loss:>8f}\n")
+        
+        scheduler.step(valid_loss)
+        if early_stopping.early_stop(valid_loss):
+            print("Early stopping")
+            break
 
-    model.eval()
-    # Testing 
-    num_rows = 2
-    num_cols = 5
-    figure, axis = plt.subplots(num_rows, num_cols)
+    # Plot model's loss over epochs
+    plt.title('Model Loss')
+    plt.ylabel('Loss')
+    plt.xlabel('Epoch')
 
-    for i in range(num_rows):
-        for j in range(num_cols):
-            image, label = next(iter(train_dl))
-            image = image.to(DEVICE)
-            label = label.to(DEVICE)
-
-            out = model(image)
-            predicted = ctc_greedy_decoding(out, idx_to_char)
-            
-            axis[i, j].set_title(f"Label: {predicted}")
-            axis[i, j].imshow(image[0].permute(1, 2, 0).cpu())
-            axis[i, j].axis('off') 
+    plt.locator_params(axis="x", integer=True, tight=True)
+    plt.plot(train_loss_history, label='train')
+    plt.plot(valid_loss_history, label='valid')
+    plt.legend(['train', 'valid'], loc='upper left')
     
     plt.show()
+    
             
 def train_epoch(model, data, optimizer, criterion, epoch=10):
     model.train()
@@ -98,7 +104,7 @@ def train_epoch(model, data, optimizer, criterion, epoch=10):
         
         # Should output a 3d tensor of size: (T, N, num_chars)
         out = model(image).to(DEVICE)
-        out = log_softmax(out, dim=2)
+        out = log_softmax(out, dim=-1)
         T, N, C = out.shape
 
         input_lengths = torch.full(size=(N,), fill_value=T).to(DEVICE)
@@ -123,7 +129,7 @@ def validate(model, data, criterion):
         
         # Should output a 3d tensor of size: (T, N, num_classes)
         out = model(image).to(DEVICE)
-        out = log_softmax(out, dim=2)
+        out = log_softmax(out, dim=-1)
         T, N, C = out.shape
 
         input_lengths = torch.full(size=(N,), fill_value=T).to(DEVICE)

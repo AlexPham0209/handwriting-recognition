@@ -11,14 +11,18 @@ from torch.utils.data import DataLoader, Dataset
 from sklearn.model_selection import train_test_split
 
 class CaptchaDataset(Dataset): 
-    def __init__(self, images, labels, idx_to_char, char_to_idx, transform=None):
+    def __init__(self, images, labels, idx_to_char, char_to_idx):
         self.images = images
         self.labels = labels
 
         self.idx_to_char = idx_to_char
         self.char_to_idx = char_to_idx
         
-        self.transform = transform
+        self.transform = transforms.Compose([
+            # transforms.RandomRotation(10),
+            transforms.RandomAdjustSharpness(5),
+            transforms.ColorJitter(brightness=(0.5, 1.0))
+        ])
 
     def __len__(self):
         return len(self.labels)
@@ -27,12 +31,12 @@ class CaptchaDataset(Dataset):
         image = torch.tensor(self.images[idx], dtype=torch.float32)
         label = torch.tensor(list(map(lambda x: self.char_to_idx[x], list(self.labels[idx]))), dtype=torch.float32)
 
-        if self.transform:
-            image = self.transform(image)
-
         image = image / 255.
         image = image.permute(2, 0, 1)
-        
+
+        if self.transform:
+            image = self.transform(image)
+    
         return image, label
 
 
