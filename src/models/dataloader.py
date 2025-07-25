@@ -26,7 +26,8 @@ class CaptchaDataset(Dataset):
 
         if self.transform:
             image = self.transform(image)
-        
+
+        image = image / 255.
         return image, label
 
 PATH = os.path.join('data', 'captcha_images_v2')
