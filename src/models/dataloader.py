@@ -28,46 +28,50 @@ class CaptchaDataset(Dataset):
             image = self.transform(image)
 
         image = image / 255.
+        image = image.transpose(2, 0, 1)
         return image, label
 
-PATH = os.path.join('data', 'captcha_images_v2')
-images = []
-labels = []
 
-
-for f in os.listdir(PATH):
-    file = os.path.join(PATH, f)
-    label = f.split('.')[0]
-
-    if not os.path.isfile(file) and not f.endswith('.png'):
-        continue
-
-    # Read the image
-    image = cv2.imread(file)
-    image = cv2.cvtColor(image, cv2.COLOR_BGR2RGB)
-
-    transform = transforms.Compose([
-        transforms.ToTensor()
-    ])
-
-    tensor = transform(image)
-    images.append(image)
-    labels.append(label)
+def load_data(batch_size=16, test_size = 0.2, random_state=29):
+    PATH = os.path.join('data', 'captcha_images_v2')
+    images = []
+    labels = []
+    symbols = set()
     
-X_train, X_test, y_train, y_test = train_test_split(
-    images, labels, test_size=0.2, random_state=42)
+    for f in os.listdir(PATH):
+        file = os.path.join(PATH, f)
+        label = f.split('.')[0]
+        
+        if not os.path.isfile(file) and not f.endswith('.png'):
+            continue
 
-X_test, X_valid, y_test, y_valid = train_test_split(
-    images, labels, test_size=0.5, random_state=42)
+        # Read the image
+        image = cv2.imread(file)
+        image = cv2.cvtColor(image, cv2.COLOR_BGR2RGB)
 
-train = CaptchaDataset(X_train, y_train)
-test = CaptchaDataset(X_test, y_test)
-validation = CaptchaDataset(X_valid, y_valid)
+        transform = transforms.Compose([
+            transforms.ToTensor()
+        ])
 
-train = DataLoader(train, batch_size=24, shuffle=True)
-test = DataLoader(test, batch_size=24, shuffle=True)
-valid = DataLoader(validation, batch_size=24, shuffle=True)
+        tensor = transform(image)
+        images.append(image)
+        labels.append(label)
+        symbols.update(list(label))
+    
+    print(len(images))
+        
+    X_train, X_test, y_train, y_test = train_test_split(
+        images, labels, test_size=test_size, random_state=random_state)
 
-image, label = next(iter(train))
-print(image.shape)
-print(label)
+    X_test, X_valid, y_test, y_valid = train_test_split(
+        images, labels, test_size=0.5, random_state=random_state)
+
+    train = CaptchaDataset(X_train, y_train)
+    test = CaptchaDataset(X_test, y_test)
+    validation = CaptchaDataset(X_valid, y_valid)
+
+    train = DataLoader(train, batch_size=batch_size, shuffle=True)
+    test = DataLoader(test, batch_size=batch_size, shuffle=True)
+    valid = DataLoader(validation, batch_size=batch_size, shuffle=True)
+
+    return train, test, valid, symbols
