@@ -11,24 +11,28 @@ from torch.utils.data import DataLoader, Dataset
 from sklearn.model_selection import train_test_split
 
 class CaptchaDataset(Dataset): 
-    def __init__(self, images, labels, transform=None):
+    def __init__(self, images, labels, idx_to_char, char_to_idx, transform=None):
         self.images = images
         self.labels = labels
-    
+
+        self.idx_to_char = idx_to_char
+        self.char_to_idx = char_to_idx
+        
         self.transform = transform
 
     def __len__(self):
         return len(self.labels)
     
     def __getitem__(self, idx):
-        image = self.images[idx]
-        label = self.labels[idx] 
+        image = torch.tensor(self.images[idx], dtype=torch.float32)
+        label = torch.tensor(list(map(lambda x: self.char_to_idx[x], list(self.labels[idx]))), dtype=torch.float32)
 
         if self.transform:
             image = self.transform(image)
 
         image = image / 255.
-        image = image.transpose(2, 0, 1)
+        image = image.permute(2, 0, 1)
+        
         return image, label
 
 
@@ -36,7 +40,7 @@ def load_data(batch_size=16, test_size = 0.2, random_state=29):
     PATH = os.path.join('data', 'captcha_images_v2')
     images = []
     labels = []
-    symbols = set()
+    chars = set()
     
     for f in os.listdir(PATH):
         file = os.path.join(PATH, f)
@@ -56,9 +60,7 @@ def load_data(batch_size=16, test_size = 0.2, random_state=29):
         tensor = transform(image)
         images.append(image)
         labels.append(label)
-        symbols.update(list(label))
-    
-    print(len(images))
+        chars.update(list(label))
         
     X_train, X_test, y_train, y_test = train_test_split(
         images, labels, test_size=test_size, random_state=random_state)
@@ -66,13 +68,16 @@ def load_data(batch_size=16, test_size = 0.2, random_state=29):
     X_test, X_valid, y_test, y_valid = train_test_split(
         images, labels, test_size=0.5, random_state=random_state)
 
-    train = CaptchaDataset(X_train, y_train)
-    test = CaptchaDataset(X_test, y_test)
-    validation = CaptchaDataset(X_valid, y_valid)
+    chars = ['-'] + sorted(list(chars))
+    idx_to_char = {i:symbol for i, symbol in enumerate(chars)}
+    char_to_idx = {symbol:i for i, symbol in enumerate(chars)}
+
+    train = CaptchaDataset(X_train, y_train, idx_to_char, char_to_idx)
+    test = CaptchaDataset(X_test, y_test, idx_to_char, char_to_idx)
+    valid = CaptchaDataset(X_valid, y_valid, idx_to_char, char_to_idx)
 
     train = DataLoader(train, batch_size=batch_size, shuffle=True)
-    test = DataLoader(test, batch_size=batch_size, shuffle=True)
-    valid = DataLoader(validation, batch_size=batch_size, shuffle=True)
+    test = DataLoader(test, batch_size=1, shuffle=True)
+    valid = DataLoader(valid, batch_size=batch_size, shuffle=True)
 
-    
-    return train, test, valid, {i:symbol for i, symbol in enumerate(symbols)}, {symbol:i for i, symbol in enumerate(symbols)}
+    return train, test, valid, idx_to_char, char_to_idx

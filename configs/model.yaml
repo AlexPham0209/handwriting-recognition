@@ -1,0 +1,9 @@
+training:
+  epochs: 500
+  save_path: 'models'
+  load_path: ''
+  batch_size: 16
+  lr: 1e-4
+
+testing:
+  load_path: 'models/best.pt'
