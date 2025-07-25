@@ -41,7 +41,7 @@ def load_data(batch_size=16, test_size = 0.2, random_state=29):
     for f in os.listdir(PATH):
         file = os.path.join(PATH, f)
         label = f.split('.')[0]
-        
+
         if not os.path.isfile(file) and not f.endswith('.png'):
             continue
 
@@ -74,4 +74,5 @@ def load_data(batch_size=16, test_size = 0.2, random_state=29):
     test = DataLoader(test, batch_size=batch_size, shuffle=True)
     valid = DataLoader(validation, batch_size=batch_size, shuffle=True)
 
-    return train, test, valid, symbols
+    
+    return train, test, valid, {i:symbol for i, symbol in enumerate(symbols)}, {symbol:i for i, symbol in enumerate(symbols)}

@@ -1,21 +1,21 @@
 from models.dataloader import load_data
 import matplotlib.pyplot as plt
+from models.model import CaptchaDetectionModel
 import torch
+from torch import nn
 
 DEVICE = torch.device("cuda" if torch.cuda.is_available() else "cpu")
 
-def train():
+def train(model, optimizer, criterion, epochs=10):
     pass
 
-if __name__ == "__main__":
-    train, test, valid, symbols = load_data(batch_size=1)
-    # while True:
-    #     image, label = next(iter(train))
-        
-    #     image = image[0]
-    #     label = label[0]
+def validation(model):
+    pass 
 
-    #     print(image.shape)
-    #     imgplot = plt.imshow(image.transpose(1, 2, 0))
-    #     plt.show()
+
+if __name__ == "__main__":
+    training, test, valid, chars_to_idx, idx_to_chars = load_data(batch_size=16)
+    model = CaptchaDetectionModel(len(chars_to_idx), 3, device=DEVICE).to(DEVICE)
+    criterion = nn.CTCLoss().to(DEVICE)
+
     
