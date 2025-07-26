@@ -11,26 +11,42 @@ def ctc_greedy(out, idx_to_char):
 
 def ctc_beam_search(out, idx_to_char, beam_size=3):
     out = out.permute(1, 0, 2)[0]
-    N, T, C = out.shape
+    out = log_softmax(out, dim=-1)
+    T, C = out.shape
 
-    candidates = [([], 1)]
+    candidates = [([], (0,0))]
 
-    for i in range(T):
+    # Go through all time steps
+    for t in range(T):
         new_candidates = []
         
+        # Go through the best candidates
         for candidate, score in candidates:
-            top_k_prob, top_k_idx = torch.topk(score + log_softmax(out[i], dim=-1), beam_size, dim=-1)
-            
-            for i in range(beam_size):
-                new_candidate = list(candidate) + [top_k_idx[i].item()]
-                new_score = top_k_prob[i].item()
+
+            # Iterate through all tokens in lexicon
+            for c in range(C):
+                new_candidate = list(candidate) + [c]
+                new_score = score * out[t, c].item()
 
                 new_candidates.append((new_candidate, new_score))
-            
+
         new_candidates = sorted(new_candidates, key=lambda x: x[1], reverse=True)[:beam_size]
         candidates = new_candidates
     
     out, _ = candidates[0]
     out = list(filter(lambda x: x != 0, [letter for letter, _ in itertools.groupby(out)]))
     return ''.join([idx_to_char[elem] for elem in out])
-    
+
+def log_sum_exp(out):
+  """
+  Stable log sum exp.
+  """
+  if torch.all(out == -torch.inf):
+      print('wowwie')
+      return -torch.inf
+
+  a_max = torch.max(out)
+  lsp = torch.log(torch.exp(out - a_max).sum(dim=-1))
+  return a_max + lsp
+
+log_sum_exp(torch.tensor([1, 2, 3, 5]))
