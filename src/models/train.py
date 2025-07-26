@@ -19,7 +19,7 @@ def train(train_dl, test_dl, valid_dl, char_to_idx, idx_to_char, config):
     criterion = nn.CTCLoss().to(DEVICE)
     optimizer = torch.optim.Adam(model.parameters(), lr=float(config['lr']))
     scheduler = torch.optim.lr_scheduler.ReduceLROnPlateau(optimizer, 'min')
-    early_stopping = EarlyStopping(patience=5, delta=0.025)
+    early_stopping = EarlyStopping(patience=5, delta=0.05)
 
     best_loss = torch.inf
     train_loss_history = []

@@ -1,5 +1,5 @@
 training:
-  epochs: 500
+  epochs: 750
   save_path: 'models'
   load_path: ''
   batch_size: 16

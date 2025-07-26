@@ -40,7 +40,7 @@ class CaptchaDataset(Dataset):
         return image, label
 
 
-def load_data(batch_size=16, test_size = 0.2, random_state=29):
+def load_data(batch_size=16, test_size = 0.2, random_state=11):
     PATH = os.path.join('data', 'captcha_images_v2')
     images = []
     labels = []

@@ -32,8 +32,8 @@ for i in range(num_rows):
         label = label.to(DEVICE)
 
         out = model(image)
-        predicted = ctc_greedy(out, idx_to_char) if config['testing']['beam_search'] else ctc_beam_search(out, idx_to_char)
-    
+        predicted = ctc_greedy(out, idx_to_char) if not config['testing']['beam_search'] else ctc_beam_search(out, idx_to_char)
+
         axis[i, j].set_title(f"{predicted}")
         axis[i, j].imshow(image[0].permute(1, 2, 0).cpu())
         axis[i, j].axis('off') 

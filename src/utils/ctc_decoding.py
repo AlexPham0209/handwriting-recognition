@@ -11,9 +11,11 @@ def ctc_greedy(out, idx_to_char):
 
 def ctc_beam_search(out, idx_to_char, beam_size=3):
     out = out.permute(1, 0, 2)[0]
+    N, T, C = out.shape
+
     candidates = [([], 1)]
 
-    for i in range(out.shape[1]):
+    for i in range(T):
         new_candidates = []
         
         for candidate, score in candidates:
