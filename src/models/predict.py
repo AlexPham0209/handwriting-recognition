@@ -21,7 +21,7 @@ model.load_state_dict(checkpoint["model_state_dict"])
 
 model.eval()
 
-num_rows = 4
+num_rows = 2
 num_cols = 5
 figure, axis = plt.subplots(num_rows, num_cols)
 
@@ -33,7 +33,7 @@ for i in range(num_rows):
 
         out = model(image)
         predicted = ctc_greedy(out, idx_to_char) if not config['testing']['beam_search'] else ctc_beam_search(out, idx_to_char)
-        
+
         axis[i, j].set_title(f"{predicted}")
         axis[i, j].imshow(image[0].permute(1, 2, 0).cpu())
         axis[i, j].axis('off') 
