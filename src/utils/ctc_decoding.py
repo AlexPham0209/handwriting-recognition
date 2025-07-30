@@ -10,7 +10,7 @@ def ctc_greedy(out, idx_to_char):
     out = list(filter(lambda x: x != 0, [letter for letter, _ in itertools.groupby(out)]))
     return ''.join([idx_to_char[elem] for elem in out])
 
-def ctc_beam_search(out, idx_to_char, beam_size=6, blank=0):
+def ctc_beam_search(out, idx_to_char, beam_size=8, blank=0):
     out = out.permute(1, 0, 2)[0]
     out = log_softmax(out, dim=-1)
     T, S = out.shape

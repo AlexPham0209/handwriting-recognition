@@ -7,4 +7,4 @@ training:
 
 testing:
   load_path: 'models/best.pt'
-  beam_search: true
+  beam_search: false
