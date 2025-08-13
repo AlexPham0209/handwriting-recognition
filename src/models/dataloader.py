@@ -20,6 +20,12 @@ class CaptchaDataset(Dataset):
         
         self.transform = transforms.Compose([
             # transforms.RandomRotation(10),
+            transforms.Lambda(lambda x: x / 255.),
+            transforms.Normalize(
+                mean=(0.485, 0.456, 0.406),
+                std=(0.229, 0.224, 0.225)
+            ),
+            transforms.Resize((224, 224)),
             transforms.RandomAdjustSharpness(5),
             transforms.ColorJitter(brightness=(0.5, 1.0))
         ])
@@ -31,7 +37,6 @@ class CaptchaDataset(Dataset):
         image = torch.tensor(self.images[idx], dtype=torch.float32)
         label = torch.tensor(list(map(lambda x: self.char_to_idx[x], list(self.labels[idx]))), dtype=torch.float32)
 
-        image = image / 255.
         image = image.permute(2, 0, 1)
 
         if self.transform:

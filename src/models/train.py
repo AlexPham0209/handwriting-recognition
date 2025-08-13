@@ -2,7 +2,7 @@ import os
 import time
 from models.dataloader import load_data
 import matplotlib.pyplot as plt
-from models.model import CaptchaDetectionModel
+from models.model import CaptchaDetectionModel, CaptchaDetectionModelV2
 from utils.ctc_decoding import ctc_greedy
 from torch.nn.functional import log_softmax, softmax
 import torch
@@ -15,11 +15,11 @@ DEVICE = torch.device("cuda" if torch.cuda.is_available() else "cpu")
 CONFIG_PATH = "configs"
 
 def train(train_dl, test_dl, valid_dl, char_to_idx, idx_to_char, config):
-    model = CaptchaDetectionModel(len(char_to_idx), device=DEVICE).to(DEVICE)
+    model = CaptchaDetectionModelV2(len(char_to_idx), device=DEVICE).to(DEVICE)
     criterion = nn.CTCLoss().to(DEVICE)
     optimizer = torch.optim.Adam(model.parameters(), lr=float(config['lr']))
     scheduler = torch.optim.lr_scheduler.ReduceLROnPlateau(optimizer, 'min')
-    early_stopping = EarlyStopping(patience=5, delta=0.05)
+    early_stopping = EarlyStopping(patience=3, delta=0.1)
 
     best_loss = torch.inf
     train_loss_history = []
@@ -78,7 +78,7 @@ def train(train_dl, test_dl, valid_dl, char_to_idx, idx_to_char, config):
         if early_stopping.early_stop(valid_loss):
             print("Early stopping")
             break
-
+            
     # Plot model's loss over epochs
     plt.title('Model Loss')
     plt.ylabel('Loss')
@@ -126,6 +126,9 @@ def validate(model, data, criterion):
     for image, label in tqdm(data, desc="Validating"):
         image = image.to(DEVICE)
         label = label.to(DEVICE)
+
+        # plt.imshow(image[0].permute(1, 2, 0).cpu())
+        # plt.show()
         
         # Should output a 3d tensor of size: (T, N, num_classes)
         out = model(image).to(DEVICE)
@@ -134,7 +137,7 @@ def validate(model, data, criterion):
 
         input_lengths = torch.full(size=(N,), fill_value=T).to(DEVICE)
         target_lengths = torch.full(size=(N,), fill_value=label.shape[-1]).to(DEVICE)
-
+    
         loss = criterion(out, label, input_lengths, target_lengths)
         losses += loss.item()
 

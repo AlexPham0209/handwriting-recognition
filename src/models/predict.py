@@ -1,7 +1,7 @@
 import os
 from matplotlib import pyplot as plt
 from models.dataloader import load_data
-from models.model import CaptchaDetectionModel
+from models.model import CaptchaDetectionModelV2
 import torch
 from utils.ctc_decoding import ctc_greedy, ctc_beam_search
 import tensorflow as tf
@@ -16,13 +16,13 @@ with open(os.path.join(CONFIG_PATH, 'model.yaml'), 'r') as file:
 train, test, valid, idx_to_char, char_to_idx = load_data()
 load_path = config['testing']['load_path']
 
-model = CaptchaDetectionModel(len(char_to_idx), device=DEVICE).to(DEVICE)
+model = CaptchaDetectionModelV2(len(char_to_idx), device=DEVICE).to(DEVICE)
 checkpoint = torch.load(load_path, weights_only=False)
 model.load_state_dict(checkpoint["model_state_dict"])
 
 model.eval()
 
-num_rows = 4
+num_rows = 2
 num_cols = 5
 figure, axis = plt.subplots(num_rows, num_cols)
 
