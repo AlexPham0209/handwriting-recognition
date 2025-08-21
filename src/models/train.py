@@ -2,7 +2,7 @@ import os
 import time
 from models.dataloader import load_data
 import matplotlib.pyplot as plt
-from models.model import CaptchaDetectionModel, CaptchaDetectionModelV2
+from models.model import CaptchaDetectionModel, CaptchaDetectionModelV2, CaptchaDetectionModelV3
 from utils.ctc_decoding import ctc_greedy
 from torch.nn.functional import log_softmax, softmax
 import torch
@@ -15,7 +15,8 @@ DEVICE = torch.device("cuda" if torch.cuda.is_available() else "cpu")
 CONFIG_PATH = "configs"
 
 def train(train_dl, test_dl, valid_dl, char_to_idx, idx_to_char, config):
-    model = CaptchaDetectionModelV2(len(char_to_idx), device=DEVICE).to(DEVICE)
+    # model = CaptchaDetectionModelV2(len(char_to_idx), device=DEVICE).to(DEVICE)
+    model = CaptchaDetectionModelV3(2, len(char_to_idx), 512, device=DEVICE).to(DEVICE)
     criterion = nn.CTCLoss().to(DEVICE)
     optimizer = torch.optim.Adam(model.parameters(), lr=float(config['lr']))
     scheduler = torch.optim.lr_scheduler.ReduceLROnPlateau(optimizer, 'min')
@@ -52,7 +53,7 @@ def train(train_dl, test_dl, valid_dl, char_to_idx, idx_to_char, config):
 
         train_loss_history.append(train_loss)
         valid_loss_history.append(valid_loss)
-
+        
         if valid_loss < best_loss:
             best_loss = valid_loss
             print("New best model, saving...")
@@ -66,7 +67,7 @@ def train(train_dl, test_dl, valid_dl, char_to_idx, idx_to_char, config):
                     "train_loss_history": train_loss_history,
                     "valid_loss_history": valid_loss_history,
                 },
-                os.path.join(save_path, "best.pt"),
+                os.path.join(save_path, "best2.pt"),
             )
 
         total_time = time.time() - start_time

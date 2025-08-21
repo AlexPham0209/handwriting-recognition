@@ -2,9 +2,9 @@ training:
   epochs: 750
   save_path: 'models'
   load_path: ''
-  batch_size: 16
-  lr: 1e-3
+  batch_size: 32
+  lr: 1e-4
 
 testing:
-  load_path: 'models/best.pt'
+  load_path: 'models/best2.pt'
   beam_search: false
