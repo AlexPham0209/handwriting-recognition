@@ -29,7 +29,7 @@ figure, axis = plt.subplots(num_rows, num_cols)
 
 for i in range(num_rows):
     for j in range(num_cols):
-        image, label = next(iter(test))
+        image, label = next(iter(train))
         image = image.to(DEVICE)
         label = label.to(DEVICE)
 

@@ -1,3 +1,4 @@
+import math
 from models.encoder import TransformerEncoder
 from models.positional_embedding import PositionalEncoding
 import torch
@@ -88,6 +89,7 @@ class CaptchaDetectionModelV3(nn.Module):
     def __init__(self, num_layers, num_chars, d_model, device):
         super(CaptchaDetectionModelV3, self).__init__()
 
+        self.d_model = d_model
         self.conv = nn.Sequential(*list(resnet50(weights=ResNet50_Weights.IMAGENET1K_V1).children())[:-2])
         for param in self.conv.parameters():
             param.requires_grad = False
@@ -111,11 +113,12 @@ class CaptchaDetectionModelV3(nn.Module):
 
         # Reshape into (N, w * h, c)
         x = x.reshape(x.shape[0], x.shape[1], -1).transpose(1, 2)
-        x = self.fc1(x)
+        x = self.fc1(x) 
         x = self.dropout(x)
     
         # Input Shape: (N, w * h, 32) where w * h represents the sequence length and 32 is the input_size
         # Output Shape: (N, w * h, 64)
+        x = x * math.sqrt(self.d_model)
         x = self.encoder(x)
         x = self.fc2(x)
         

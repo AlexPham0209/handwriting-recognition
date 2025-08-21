@@ -53,7 +53,7 @@ def train(train_dl, test_dl, valid_dl, char_to_idx, idx_to_char, config):
 
         train_loss_history.append(train_loss)
         valid_loss_history.append(valid_loss)
-        
+
         if valid_loss < best_loss:
             best_loss = valid_loss
             print("New best model, saving...")
@@ -148,6 +148,6 @@ def validate(model, data, criterion):
 if __name__ == "__main__":
     with open(os.path.join(CONFIG_PATH, 'model.yaml'), 'r') as file:
         config = yaml.safe_load(file)
-
+    
     training, test, valid, idx_to_char, char_to_idx = load_data(batch_size=config["training"]["batch_size"])
     train(training, test, valid, char_to_idx, idx_to_char, config["training"])

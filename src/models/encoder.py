@@ -16,8 +16,8 @@ class EncoderLayer(nn.Module):
         super(EncoderLayer, self).__init__()
 
         # Self Attention
-        # self.attention = MultiHeadAttention(d_model, num_heads)
-        self.attention = nn.MultiheadAttention(d_model, num_heads)
+        self.attention = MultiHeadAttention(d_model, num_heads)
+        # self.attention = nn.MultiheadAttention(d_model, num_heads)
         self.layer_norm_1 = nn.LayerNorm(d_model)
         self.dropout_1 = nn.Dropout(p=dropout)
 
@@ -29,15 +29,15 @@ class EncoderLayer(nn.Module):
     def forward(self, x: torch.Tensor, mask: Optional[torch.Tensor] = None):
         # Self Attention
         # Shape: (batch_size, sequence_size, d_model)
-        # x = x + self.dropout_1(self.attention(q=x, k=x, v=x, mask=mask))
-        x = x + self.dropout_1(self.attention(x, x, x, attn_mask=mask)[0])
+        x = x + self.dropout_1(self.attention(q=x, k=x, v=x, mask=mask))
+        # x = x + self.dropout_1(self.attention(x, x, x, attn_mask=mask)[0])
         x = self.layer_norm_1(x)
         
         # Position-Wise Feed Forward
         # Shape: (batch_size, sequence_size, d_model)
         x = x + self.dropout_2(self.ff(x))
         x = self.layer_norm_2(x)
-
+        
         return x
 
 
